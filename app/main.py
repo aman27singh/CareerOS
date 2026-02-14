@@ -6,8 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.models import (
     AnalyzeRoleRequest,
     AnalyzeRoleResponse,
+    GenerateCareerPlanRequest,
+    GenerateCareerPlanResponse,
     GenerateRoadmapRequest,
     GenerateRoadmapResponse,
+    MissingSkill,
     ProfileAnalysisResponse,
     SubmitTaskRequest,
     SubmitTaskResponse,
@@ -99,3 +102,23 @@ def generate_roadmap_endpoint(request: GenerateRoadmapRequest) -> GenerateRoadma
     ]
     result = generate_roadmap(missing_skills_list)
     return GenerateRoadmapResponse(**result)
+
+
+@app.post("/generate-career-plan", response_model=GenerateCareerPlanResponse)
+def generate_career_plan_endpoint(
+    request: GenerateCareerPlanRequest,
+) -> GenerateCareerPlanResponse:
+    role_result = analyze_role(
+        user_skills=request.user_skills,
+        selected_role=request.selected_role,
+    )
+    missing_skills = role_result.get("missing_skills", [])
+    roadmap_result = generate_roadmap(missing_skills)
+
+    return GenerateCareerPlanResponse(
+        alignment_score=role_result.get("alignment_score", 0.0),
+        missing_skills=[MissingSkill(**skill) for skill in missing_skills],
+        roadmap=roadmap_result["roadmap"],
+        capstone=roadmap_result["capstone"],
+        review=roadmap_result["review"],
+    )

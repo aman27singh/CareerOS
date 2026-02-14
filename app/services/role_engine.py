@@ -7,6 +7,7 @@ Loads skill frequencies from app/data/market_skills.json at startup.
 import json
 from pathlib import Path
 
+from app.services.skill_curation import get_skill_curation
 MARKET_DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "market_skills.json"
 
 
@@ -41,10 +42,24 @@ def analyze_role(user_skills: list[str], selected_role: str) -> dict:
         if skill.lower() in user_skills_normalized:
             earned_weight += importance_weight
         else:
+            percentage = round(frequency * 100, 2)
+            why_this_skill_matters = (
+                f"{skill} appears in {percentage}% of {selected_role} job postings "
+                f"and is critical for {selected_role}-level responsibilities."
+            )
+            market_signal = (
+                f"Mentioned in {percentage}% of {selected_role} postings."
+            )
+            curation = get_skill_curation(skill.lower().strip())
             missing_skills.append(
                 {
                     "skill": skill,
                     "importance": importance_weight,
+                    "why_this_skill_matters": why_this_skill_matters,
+                    "market_signal": market_signal,
+                    "learning_resources": curation.get("learning_resources", []),
+                    "recommended_project": curation.get("recommended_project", {}),
+                    "checkpoints": curation.get("checkpoints", []),
                 }
             )
 

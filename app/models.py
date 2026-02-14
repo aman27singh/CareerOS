@@ -56,6 +56,11 @@ class ProfileAnalysisResponse(BaseModel):
 class MissingSkill(BaseModel):
     skill: str
     importance: int
+    why_this_skill_matters: str | None = None
+    market_signal: str | None = None
+    learning_resources: list[str] | None = None
+    recommended_project: dict | None = None
+    checkpoints: list[str] | None = None
 
 
 class AnalyzeRoleRequest(BaseModel):
@@ -97,3 +102,16 @@ class GenerateRoadmapResponse(BaseModel):
     review: CapstoneDay
     total_days: int
     total_skills: int
+
+
+class GenerateCareerPlanRequest(BaseModel):
+    user_skills: list[str]
+    selected_role: str
+
+
+class GenerateCareerPlanResponse(BaseModel):
+    alignment_score: float
+    missing_skills: list[MissingSkill]
+    roadmap: list[WeekPlan]
+    capstone: CapstoneDay
+    review: CapstoneDay

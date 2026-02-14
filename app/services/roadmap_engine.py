@@ -1,18 +1,16 @@
 """
-Roadmap engine: Generate 30-day learning roadmaps using Ollama AI.
+Roadmap engine: Generate 30-day learning roadmaps using Ollama.
 
-Deterministic fallback if Ollama is unavailable.
+Deterministic fallback if AI generation is unavailable.
 """
 
 from __future__ import annotations
 
 import json
-
 import requests
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "llama3"
-OLLAMA_TIMEOUT = 30
+OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
+OLLAMA_TIMEOUT = 90
 
 # Fallback templates if Ollama fails
 DAILY_TASK_TEMPLATES = {
@@ -38,9 +36,9 @@ DAILY_DESCRIPTIONS = {
 
 def generate_ai_week_plan(skill: str, role_context: str) -> list[dict]:
     """
-    Generate a 7-day learning plan using Ollama AI.
+    Generate a 7-day learning plan using Ollama.
 
-    Falls back to deterministic template if Ollama fails.
+    Falls back to deterministic template if AI generation fails.
 
     Args:
         skill: The skill to learn
@@ -50,56 +48,47 @@ def generate_ai_week_plan(skill: str, role_context: str) -> list[dict]:
         List of daily tasks
     """
     prompt = (
-        f"Generate a structured 7-day learning plan for mastering {skill} "
-        f"as part of becoming a {role_context}. "
-        f"Return ONLY valid JSON format with no additional text:\n"
-        f"[\n"
-        f'  {{ "day": 1, "task": "...", "description": "..." }},\n'
-        f"  ...\n"
-        f"]\n"
-        f"Ensure the array contains exactly 7 objects."
+        "Return ONLY valid JSON. "
+        "Generate exactly 7 objects for a 7-day learning plan. "
+        "Each object must be in this format: "
+        '{"day": number, "task": string, "description": string}.\n\n'
+        f"Skill: {skill}\n"
+        f"Role: {role_context}\n"
+        "Format strictly as a JSON array. No explanation. No markdown."
     )
 
     try:
         resp = requests.post(
-            "http://localhost:11434/api/generate",
+            OLLAMA_URL,
             json={
                 "model": "llama3",
                 "prompt": prompt,
                 "stream": False,
-                "temperature": 0.3,
+                "options": {
+                    "temperature": 0.3,
+                },
             },
-            timeout=30,
+            timeout=OLLAMA_TIMEOUT,
         )
         resp.raise_for_status()
 
-        data = resp.json()
+        response_json = resp.json()
+        raw_text = str(response_json.get("response", "")).strip()
 
-        # Ollama puts model output inside "response"
-        raw_text = data.get("response", "").strip()
-
-        print("Ollama raw response:", raw_text)
-
-        # Extract JSON array safely
         start = raw_text.find("[")
         end = raw_text.rfind("]")
-
         if start == -1 or end == -1:
             raise ValueError("No JSON array found in Ollama response")
 
         extracted_json = raw_text[start : end + 1]
-        print("AI JSON extracted:", extracted_json)
-
         week_plan = json.loads(extracted_json)
 
-        # Validate structure: must be a list with at least 7 items
         if not isinstance(week_plan, list):
             raise ValueError("Response is not a JSON array")
 
         if len(week_plan) < 7:
             raise ValueError(f"Expected at least 7 items, got {len(week_plan)}")
 
-        # Return exactly 7 items
         return week_plan[:7]
 
     except (
@@ -108,8 +97,8 @@ def generate_ai_week_plan(skill: str, role_context: str) -> list[dict]:
         KeyError,
         TypeError,
         ValueError,
-    ) as e:
-        print(f"Ollama parsing failed: {e}. Using fallback.")
+    ):
+        print("Ollama failed, using fallback")
         pass
 
     # Fallback to deterministic template
