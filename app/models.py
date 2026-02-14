@@ -11,6 +11,26 @@ class UserMetrics(BaseModel):
     total_assigned_tasks: int
     execution_score: float
     last_submission_date: str | None = None
+    skill_distribution: dict[str, int] = {
+        "Technical": 65,
+        "System Design": 40,
+        "Execution": 78,
+        "Soft Skills": 50,
+        "Strategic": 30
+    }
+    activity_log: list[dict[str, int | str]] = [
+        {"day": "Mon", "xp": 45},
+        {"day": "Tue", "xp": 52},
+        {"day": "Wed", "xp": 38},
+        {"day": "Thu", "xp": 65},
+        {"day": "Fri", "xp": 48}
+    ]
+    knowledge_map: list[dict[str, int | str]] = [
+        {"name": "Backend", "value": 40, "color": "var(--accent-primary)"},
+        {"name": "Frontend", "value": 25, "color": "var(--accent-secondary)"},
+        {"name": "DevOps", "value": 20, "color": "#8B5CF6"},
+        {"name": "AI/ML", "value": 15, "color": "#F59E0B"}
+    ]
 
 
 class RoleGap(BaseModel):
@@ -27,6 +47,13 @@ class QuestTask(BaseModel):
     completed: bool
 
 
+class TaskFeedback(BaseModel):
+    rating: int
+    mistakes: list[str]
+    correct_approach: str
+    improvements: list[str]
+
+
 class SubmitTaskRequest(BaseModel):
     user_id: str
     submission_text: str
@@ -39,11 +66,13 @@ class SubmitTaskResponse(BaseModel):
     rank: str
     streak: int
     execution_score: float
+    feedback: TaskFeedback | None = None
 
 
 class GithubAnalysis(BaseModel):
     repo_count: int
     primary_languages: list[str]
+    language_breakdown: dict[str, int]
 
 
 class ProfileAnalysisResponse(BaseModel):

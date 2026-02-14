@@ -18,7 +18,8 @@ from app.models import (
 from app.services.profile_engine import analyze_profile
 from app.services.roadmap_engine import generate_roadmap
 from app.services.role_engine import analyze_role
-from app.services.utils import update_metrics_on_task_submission
+from app.services.eval_engine import evaluate_submission
+from app.services.utils import load_user_metrics, update_metrics_on_task_submission
 
 app = FastAPI(title="CareerOS")
 
@@ -34,6 +35,11 @@ app.add_middleware(
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/metrics/{user_id}")
+def get_metrics(user_id: str):
+    return load_user_metrics(user_id)
 
 
 def _auto_quality_score(submission_text: str) -> int:
@@ -57,9 +63,9 @@ def _auto_quality_score(submission_text: str) -> int:
 
 @app.post("/submit-task", response_model=SubmitTaskResponse)
 def submit_task(payload: SubmitTaskRequest) -> SubmitTaskResponse:
-    quality_score = payload.quality_score
-    if quality_score is None:
-        quality_score = _auto_quality_score(payload.submission_text)
+    # Use AI evaluation
+    feedback = evaluate_submission(payload.submission_text)
+    quality_score = feedback.rating
 
     updated = update_metrics_on_task_submission(
         payload.user_id,
@@ -72,6 +78,7 @@ def submit_task(payload: SubmitTaskRequest) -> SubmitTaskResponse:
         rank=updated.rank,
         streak=updated.streak,
         execution_score=updated.execution_score,
+        feedback=feedback
     )
 
 

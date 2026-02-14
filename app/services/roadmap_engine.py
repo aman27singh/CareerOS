@@ -156,7 +156,12 @@ def generate_roadmap(
         skill_name = skill_dict.get("skill", "Skill")
         importance = skill_dict.get("importance", 0)
 
-        days = generate_ai_week_plan(skill_name, role_context)
+        # Optimization: Only use AI for the first week (highest priority) to reduce latency
+        # Subsequent weeks use deterministic templates
+        if week_num == 1:
+            days = generate_ai_week_plan(skill_name, role_context)
+        else:
+            days = generate_deterministic_week_plan(skill_name)
 
         roadmap.append(
             {

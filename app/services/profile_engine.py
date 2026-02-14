@@ -80,26 +80,38 @@ def analyze_github(username: str | None) -> dict:
 
     url = f"https://api.github.com/users/{username}/repos"
     try:
+        print(f"DEBUG: Fetching GitHub repos for user: {username}")
         response = requests.get(
             url,
             timeout=10,
             headers={"Accept": "application/vnd.github+json"},
         )
-    except requests.RequestException:
+        print(f"DEBUG: GitHub API Status Code: {response.status_code}")
+    except requests.RequestException as e:
+        print(f"DEBUG: GitHub API Request Exception: {e}")
         return {"repo_count": 0, "primary_languages": []}
 
     if response.status_code != 200:
+        print(f"DEBUG: GitHub API Error Response: {response.text}")
         return {"repo_count": 0, "primary_languages": []}
 
     repos = response.json()
     if not isinstance(repos, list):
+        print(f"DEBUG: Expected list of repos, got: {type(repos)}")
         return {"repo_count": 0, "primary_languages": []}
+    
+    print(f"DEBUG: Found {len(repos)} repos for user {username}")
 
     languages = [repo.get("language") for repo in repos if repo.get("language")]
     counts = Counter(languages)
     primary_languages = [name for name, _ in counts.most_common(3)]
+    language_breakdown = dict(counts.most_common(5))
 
-    return {"repo_count": len(repos), "primary_languages": primary_languages}
+    return {
+        "repo_count": len(repos), 
+        "primary_languages": primary_languages,
+        "language_breakdown": language_breakdown,
+    }
 
 
 def analyze_profile(resume_bytes: bytes | None, github_username: str | None) -> dict:
