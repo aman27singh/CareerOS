@@ -1,6 +1,6 @@
-# 🚀 CareerOS: Your AI-Powered Career Co-Pilot
+# 🚀 CareerCoach: Your AI-Powered Career Co-Pilot
 
-**CareerOS** is a high-fidelity, data-driven dashboard designed to gamify and accelerate your professional growth. It combines AI-powered skill analysis, real-time market data, and a tiered community system to transform your career journey into an epic quest.
+**CareerCoach** is a high-fidelity, data-driven dashboard designed to gamify and accelerate your professional growth. It combines AI-powered skill analysis, real-time market data, and a tiered community system to transform your career journey into an epic quest.
 
 ---
 
